@@ -6,8 +6,9 @@
   <title>DayMind - Your Life Intelligence System</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <script src="/_sdk/element_sdk.js"></script>
-  <script src="/_sdk/data_sdk.js"></script>
+  <!-- SDK Protection: If these files are missing, the app will fallback to local storage -->
+  <script src="/_sdk/element_sdk.js" onerror="console.warn('Element SDK not found, using local fallback')"></script>
+  <script src="/_sdk/data_sdk.js" onerror="console.warn('Data SDK not found, using local fallback')"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <style>
     html, body { height: 100%; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%); }
@@ -67,12 +68,22 @@
     .cat-pill.active { filter: grayscale(0); opacity: 1; transform: scale(1.05); border-width: 2px; border-color: currentColor; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     
     .badge-category { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; }
+
+    .agenda-card { position: relative; overflow: hidden; }
+    .agenda-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+
+    #motivationContainer { min-height: 4.5rem; display: flex; align-items: center; justify-content: center; }
+    .motivation-text { font-size: 0.85rem; font-weight: 600; text-align: center; color: #60a5fa; line-height: 1.5; padding: 0 1.5rem; text-shadow: 0 0 10px rgba(96, 165, 250, 0.2); }
   </style>
  </head>
  <body class="h-full text-[#e2e8f0] overflow-hidden">
   
   <audio id="focusMusic" loop preload="auto">
     <source src="https://raw.githubusercontent.com/syukurGL/pomodoro.html/main/Audio1.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="newFocusMusic" loop preload="auto">
+    <!-- Direct link from the user's Google Drive reference -->
+    <source src="https://docs.google.com/uc?export=download&id=1Q-BkgtWvnRwEbRO0J4sWM-sS1_7w5b51" type="audio/mpeg">
   </audio>
 
   <div id="app" class="h-full flex overflow-hidden">
@@ -130,14 +141,20 @@
     <!-- AGENDA -->
     <div id="page-agenda" class="page hidden fade-in">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div><h2 class="text-4xl font-black text-white mb-2">Agenda</h2><p class="text-slate-400 font-medium" id="agendaDateDisplay"></p></div>
-            <button onclick="openQuickAgendaModal()" class="btn-primary px-6 py-3 flex items-center justify-center gap-2 text-base"><i data-lucide="plus-circle" class="w-5 h-5"></i> Tambah Agenda</button>
+            <div>
+              <h2 class="text-4xl font-black text-white mb-2">Agenda</h2>
+              <div class="flex items-center gap-3 bg-slate-900/40 p-2 rounded-xl border border-white/5 w-fit">
+                <i data-lucide="calendar" class="w-4 h-4 text-blue-400"></i>
+                <input type="date" id="agendaDatePicker" class="bg-transparent text-white font-bold text-sm outline-none border-none cursor-pointer" onchange="switchAgendaDate(this.value)">
+              </div>
+            </div>
+            <button onclick="openQuickAgendaModal()" class="btn-primary px-6 py-3 flex items-center justify-center gap-2 text-base shadow-lg shadow-blue-900/20"><i data-lucide="plus-circle" class="w-5 h-5"></i> Tambah Agenda</button>
         </div>
         <div id="agendaList" class="space-y-4 max-w-4xl"></div>
         <div id="agendaEmpty" class="hidden flex flex-col items-center justify-center py-20 text-center">
             <div class="w-24 h-24 bg-slate-800/50 rounded-full flex items-center justify-center mb-6 border border-white/5"><i data-lucide="calendar-days" class="w-10 h-10 text-slate-600"></i></div>
-            <h3 class="text-xl font-bold text-slate-300 mb-2">Belum ada agenda hari ini</h3>
-            <button onclick="openQuickAgendaModal()" class="btn-secondary px-6 py-3 font-bold text-blue-400">Buat Agenda Pertama</button>
+            <h3 class="text-xl font-bold text-slate-300 mb-2">Belum ada agenda di tanggal ini</h3>
+            <button onclick="openQuickAgendaModal()" class="btn-secondary px-6 py-3 font-bold text-blue-400 mt-2">Buat Agenda Baru</button>
         </div>
     </div>
 
@@ -158,7 +175,7 @@
                     <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5 mb-6">
                         <input type="file" id="docPhotoInput" class="hidden" accept="image/*" multiple>
                         <button onclick="document.getElementById('docPhotoInput').click()" class="w-full h-24 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group" id="photoPlaceholder">
-                            <i data-lucide="upload-cloud" class="w-6 h-6 text-slate-600 group-hover:text-blue-400 transition-colors"></i>
+                            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-600 group-hover:text-blue-400 transition-colors"></i>
                             <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pilih Foto</span>
                         </button>
                         <div id="uploadPreviewList" class="hidden flex flex-wrap gap-2 mt-4 p-2 bg-slate-950/30 rounded-lg"></div>
@@ -212,9 +229,23 @@
         <div id="dwTimerLabel" class="text-blue-400 font-black tracking-widest text-xs uppercase mb-4 tracking-[0.2em]">SIAP BEKERJA</div>
         <div id="dwTimer" class="text-8xl font-mono font-black text-white mb-4 tabular-nums">00:00</div>
         <div class="px-12"><div class="progress-container"><div id="dwProgressBar"></div></div></div>
+        
+        <!-- Motivation Message Area -->
+        <div id="motivationContainer" class="mt-2 mb-2"></div>
+
         <div class="flex justify-center gap-4 mt-8">
          <button onclick="toggleDWTimer()" id="dwStartBtn" class="btn-primary px-10 py-4 rounded-2xl flex items-center gap-3 font-black"><i data-lucide="play" class="w-6 h-6"></i><span>MULAI</span></button>
          <button onclick="resetDWTimer()" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl transition font-bold">RESET</button>
+        </div>
+
+        <div class="mt-6 flex flex-col items-center gap-3">
+            <div class="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full border border-white/10">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Audio Fokus</span>
+                <select id="audioSourceSelect" class="bg-transparent text-[10px] font-black text-blue-400 uppercase outline-none" onchange="switchAudioSource()">
+                    <option value="focusMusic" class="bg-slate-900">Ambient Classical</option>
+                    <option value="newFocusMusic" class="bg-slate-900">Deep Focus Lo-Fi</option>
+                </select>
+            </div>
         </div>
        </div>
       </div>
@@ -241,20 +272,75 @@
     // --- GLOBAL STATE ---
     let appData = loadData() || {
         agenda: {}, journal: {}, goals: [], dwHistory: [],
-        timer: { mode: null, timeLeft: 0, isRunning: false }, settings: { music: true }
+        timer: { mode: null, timeLeft: 0, isRunning: false, isBreak: false, rounds: 0 }, 
+        settings: { music: true, activeAudioId: 'focusMusic' }
     };
 
     let currentPage = 'dashboard';
-    let currentJournalDate = getTodayKey(); // Dideklarasikan di awal
+    let currentJournalDate = getTodayKey(); 
+    let currentAgendaDate = getTodayKey();
     let dwCurrentMode = appData.timer.mode;
     let dwTimerInterval = null, dwSeconds = appData.timer.timeLeft, dwTotalSeconds = appData.timer.timeLeft;
     let dwIsRunning = false, pendingUploads = [];
     let tempSelectedCat = 'Kerja';
+    let editingAgendaIdx = null;
+    let editingGoalIdx = null; 
 
     const categoryColors = { "Kerja": "#3B82F6", "Belajar": "#10B981", "Olahraga": "#F59E0B", "Pribadi": "#EF4444" };
     const categoryIcons = { "Kerja": "💼", "Belajar": "📚", "Olahraga": "🏃", "Pribadi": "☕" };
 
+    // --- MOTIVATION REPOSITORY (Vibrant & Adaptive) ---
+    const motivationPool = {
+        1: ["Gaspol! Langkah awal tuntas, kamu keren sudah berani mulai!"],
+        2: ["Mantap, momentum mulai kebentuk. Lanjut terus jangan kasih kendor!"],
+        3: ["Tiga sesi beres! Otakmu lagi encer-encernya nih, gokil!"],
+        4: ["Setengah jalan! Kamu di zona produktif yang luar biasa. Bangga banget!"],
+        5: ["Konsistensi adalah kunci, dan kamu rajanya hari ini. Edan!"],
+        6: ["Enam sesi tuntas. Kamu nggak cuma kerja, kamu lagi bikin mahakarya!"],
+        7: ["Unstoppable! Sepertinya nggak ada yang bisa stop kamu hari ini. Semangat!"],
+        8: ["Delapan sesi! Level fokusmu sudah di atas rata-rata orang biasa. Istimewa!"],
+        9: ["Legendary! Hari ini bakal jadi hari paling produktifmu. Terus melaju!"],
+        10: ["Monster Produktivitas! 10 sesi tuntas. Kamu luar biasa, tapi ingat istirahat ya!"]
+    };
+
+    // Casual Motivation for Goals
+    const goalMotivationPool = {
+        0: "Gaspol! Yang penting berani mulai dulu.",
+        25: "Widih, pemanasan mantap! Lanjut terus jangan kasih kendor.",
+        50: "Setengah jalan tuntas! Kamu keren banget hari ini, gas terus!",
+        75: "Dikit lagi nyampe! Fokus, kamu hampir menaklukkan target ini.",
+        100: "GOKIL! Target beres. Waktunya self-reward, kamu pantas mendapatkannya!"
+    };
+
+    const breakDurations = {
+        pomodoro: 5,
+        research: 15,
+        learning: 10
+    };
+
+    // Auto-save sync
     setInterval(() => { saveData(appData); }, 3000);
+
+    // --- AUDIO LOGIC ---
+    function getActiveAudio() {
+        return document.getElementById(appData.settings.activeAudioId || 'focusMusic');
+    }
+
+    function switchAudioSource() {
+        const selectedId = document.getElementById('audioSourceSelect').value;
+        const oldAudio = getActiveAudio();
+        const isPlaying = !oldAudio.paused;
+        
+        oldAudio.pause();
+        oldAudio.currentTime = 0;
+        
+        appData.settings.activeAudioId = selectedId;
+        saveData(appData);
+        
+        if (isPlaying && dwIsRunning && !appData.timer.isBreak) {
+            getActiveAudio().play().catch(() => {});
+        }
+    }
 
     // --- NAVIGATION ---
     function navigateTo(page) {
@@ -272,7 +358,11 @@
     function renderCurrentPage() {
         if(currentPage === 'dashboard') renderDashboard();
         if(currentPage === 'agenda') renderAgenda();
-        if(currentPage === 'deepwork') renderDWHistory();
+        if(currentPage === 'deepwork') {
+            renderDWHistory();
+            const select = document.getElementById('audioSourceSelect');
+            if(select) select.value = appData.settings.activeAudioId || 'focusMusic';
+        }
         if(currentPage === 'journal') renderReflectionUI();
         if(currentPage === 'goals') renderGoals();
     }
@@ -300,20 +390,19 @@
     }
 
     // --- AGENDA LOGIC ---
+    function switchAgendaDate(date) { currentAgendaDate = date; renderAgenda(); }
     function renderAgenda() {
         const listEl = document.getElementById('agendaList'), emptyEl = document.getElementById('agendaEmpty');
-        const today = getTodayKey();
-        const activities = appData.agenda[today]?.activities || [];
-        document.getElementById('agendaDateDisplay').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+        const activities = appData.agenda[currentAgendaDate]?.activities || [];
         if (activities.length === 0) { listEl.innerHTML = ''; emptyEl.classList.remove('hidden'); return; }
         emptyEl.classList.add('hidden');
         listEl.innerHTML = activities.map((act, i) => {
             const color = categoryColors[act.category] || '#3b82f6';
-            return `<div class="card-premium p-5 flex items-center justify-between group fade-in ${act.completed ? 'opacity-50 grayscale-[0.5]' : ''}">
+            return `<div class="card-premium agenda-card p-5 flex items-center justify-between group fade-in ${act.completed ? 'opacity-40 grayscale-[0.5]' : ''}" style="background: ${color}1a; border-left: 6px solid ${color}">
                 <div class="flex items-center gap-5">
                     <div onclick="toggleAgendaTask(${i})" class="checkbox-goal ${act.completed ? 'checked' : ''}">${act.completed ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}</div>
                     <div><h4 class="text-lg font-black text-white ${act.completed ? 'line-through opacity-40' : ''}">${act.title}</h4>
-                        <div class="flex items-center gap-3 mt-2"><span class="badge-category" style="background: ${color}22; color: ${color}; border: 1px solid ${color}44;">${categoryIcons[act.category] || '📌'} ${act.category}</span><span class="text-xs text-slate-500 font-black tracking-widest">${act.time || '--:--'}</span></div>
+                        <div class="flex items-center gap-3 mt-2"><span class="badge-category" style="background: ${color}22; color: ${color}; border: 1px solid ${color}44;">${categoryIcons[act.category] || '📌'} ${act.category}</span><span class="text-xs text-slate-500 font-black tracking-widest">${act.startTime || '--:--'} - ${act.endTime || '--:--'}</span></div>
                     </div>
                 </div>
                 <button onclick="deleteAgendaTask(${i})" class="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
@@ -321,25 +410,28 @@
         }).join('');
         lucide.createIcons();
     }
-    function toggleAgendaTask(i) { const today = getTodayKey(); appData.agenda[today].activities[i].completed = !appData.agenda[today].activities[i].completed; saveData(appData); renderAgenda(); renderDashboard(); }
-    function deleteAgendaTask(i) { const today = getTodayKey(); appData.agenda[today].activities.splice(i, 1); saveData(appData); renderAgenda(); renderDashboard(); }
-    function openQuickAgendaModal() {
-        tempSelectedCat = 'Kerja';
-        openModal(`<div class="mb-8"><h3 class="text-2xl font-black text-white mb-2">Agenda Baru</h3></div>
+    function toggleAgendaTask(i) { appData.agenda[currentAgendaDate].activities[i].completed = !appData.agenda[currentAgendaDate].activities[i].completed; saveData(appData); renderAgenda(); renderDashboard(); }
+    function deleteAgendaTask(i) { if(confirm("Hapus agenda ini?")) { appData.agenda[currentAgendaDate].activities.splice(i, 1); saveData(appData); renderAgenda(); renderDashboard(); } }
+    function openQuickAgendaModal() { editingAgendaIdx = null; showAgendaModal("Tambah Agenda Baru"); }
+    function showAgendaModal(title, data = null) {
+        openModal(`<div class="mb-8"><h3 class="text-2xl font-black text-white mb-2">${title}</h3></div>
             <div class="space-y-6">
-                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Nama Kegiatan</label><input type="text" id="taskTitle" class="input-field text-lg font-bold"></div>
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Nama Kegiatan</label><input type="text" id="taskTitle" class="input-field text-lg font-bold"></div>
                 <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Kategori</label>
-                    <div class="grid grid-cols-2 gap-3">${Object.keys(categoryColors).map(c => `<div onclick="selectCat('${c}')" class="cat-pill p-3 rounded-xl bg-white/5 text-center flex items-center justify-center gap-2 ${c === 'Kerja' ? 'active' : ''}" style="color: ${categoryColors[c]}"><span class="text-lg">${categoryIcons[c]}</span><span class="text-xs font-black uppercase">${c}</span></div>`).join('')}</div>
+                    <div class="grid grid-cols-2 gap-3">${Object.keys(categoryColors).map(c => `<div onclick="selectCat('${c}')" class="cat-pill p-3 rounded-xl bg-white/5 text-center flex items-center justify-center gap-2 ${tempSelectedCat === c ? 'active' : ''}" style="color: ${categoryColors[c]}"><span class="text-lg">${categoryIcons[c]}</span><span class="text-xs font-black uppercase">${c}</span></div>`).join('')}</div>
                 </div>
-                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Waktu</label><input type="time" id="taskTime" class="input-field font-bold"></div>
-                <div class="flex gap-4 pt-4"><button onclick="closeModal()" class="flex-1 py-4 font-black text-slate-500">BATAL</button><button onclick="addAgendaTask()" class="flex-[2] btn-primary py-4 text-lg">SIMPAN</button></div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Mulai</label><input type="time" id="taskStartTime" class="input-field font-bold"></div>
+                  <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Selesai</label><input type="time" id="taskEndTime" class="input-field font-bold"></div>
+                </div>
+                <div class="flex gap-4 pt-4"><button onclick="closeModal()" class="flex-1 py-4 font-black text-slate-500 hover:text-white">BATAL</button><button onclick="addAgendaTask()" class="flex-[2] btn-primary py-4 text-lg">SIMPAN</button></div>
             </div>`);
     }
     function selectCat(n) { tempSelectedCat = n; document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active')); event.currentTarget.classList.add('active'); }
     function addAgendaTask() {
         const title = document.getElementById('taskTitle').value.trim(); if (!title) return;
-        const today = getTodayKey(); if(!appData.agenda[today]) appData.agenda[today] = { activities: [] };
-        appData.agenda[today].activities.unshift({ title, category: tempSelectedCat, time: document.getElementById('taskTime').value, completed: false });
+        if(!appData.agenda[currentAgendaDate]) appData.agenda[currentAgendaDate] = { activities: [] };
+        appData.agenda[currentAgendaDate].activities.unshift({ title, category: tempSelectedCat, startTime: document.getElementById('taskStartTime').value || '--:--', endTime: document.getElementById('taskEndTime').value || '--:--', completed: false });
         saveData(appData); renderAgenda(); closeModal();
     }
 
@@ -355,15 +447,6 @@
     }
     function saveAnswer(id, val) { appData.journal[currentJournalDate].answers[id] = val; saveData(appData); }
     
-    document.getElementById('docPhotoInput')?.addEventListener('change', function(e) {
-        const files = Array.from(e.target.files); const previewList = document.getElementById('uploadPreviewList');
-        previewList.classList.remove('hidden'); previewList.innerHTML = '';
-        files.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (ev) => { pendingUploads.push(ev.target.result); const img = document.createElement('img'); img.src = ev.target.result; img.className = 'preview-thumbnail'; previewList.appendChild(img); };
-            reader.readAsDataURL(file);
-        });
-    });
     function saveDocumentationBulk() {
         const desc = document.getElementById('docDescription').value.trim();
         if(pendingUploads.length === 0 || !desc) { showToast("Foto & Keterangan wajib!", "error"); return; }
@@ -380,100 +463,329 @@
     }
     function deleteDoc(idx) { appData.journal[currentJournalDate].documentation.splice(idx, 1); saveData(appData); renderDocGallery(appData.journal[currentJournalDate].documentation); }
 
-    // --- GOALS LOGIC ---
+    // --- TARGET & GOALS LOGIC (UPGRADED) ---
     function renderGoals() {
         const listEl = document.getElementById('goalsList'), emptyEl = document.getElementById('goalsEmpty');
         if(appData.goals.length === 0) { if(listEl) listEl.innerHTML = ''; emptyEl.classList.remove('hidden'); return; }
         emptyEl.classList.add('hidden');
+        
+        // Auto-Sort: Deadline terdekat di atas
+        appData.goals.sort((a, b) => {
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            return new Date(a.deadline) - new Date(b.deadline);
+        });
+
         listEl.innerHTML = appData.goals.map((goal, idx) => {
-            const color = categoryColors[goal.category] || '#3b82f6'; const isDone = goal.progress >= 100 || goal.completed;
-            return `<div class="card-premium p-7 fade-in ${isDone ? 'border-emerald-500/50 bg-emerald-500/5' : ''}">
-                <div class="flex items-start justify-between mb-6">
-                    <div class="flex items-center gap-5"><div onclick="toggleGoal(${idx})" class="checkbox-goal ${isDone ? 'checked' : ''}">${isDone ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}</div>
-                    <div><h4 class="text-xl font-black text-white ${isDone ? 'opacity-60' : ''}">${goal.title}</h4><p class="text-xs text-slate-500 font-medium mt-1">${goal.description || ''}</p></div></div>
-                    <button onclick="deleteGoal(${idx})" class="text-slate-600 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            const color = categoryColors[goal.category] || '#3b82f6'; 
+            const isDone = goal.progress >= 100 || goal.completed;
+            const dateRange = (goal.startDate && goal.deadline) ? `${goal.startDate} s/d ${goal.deadline}` : (goal.deadline || 'Tanpa Deadline');
+
+            return `<div class="card-premium p-7 fade-in ${isDone ? 'border-emerald-500/50 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.1)]' : ''}">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center gap-5">
+                        <div onclick="toggleGoal(${idx})" class="checkbox-goal ${isDone ? 'checked' : ''}">
+                            ${isDone ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-black text-white ${isDone ? 'opacity-60' : ''}">${goal.title}</h4>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-3 h-3"></i> ${dateRange}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openEditGoalModal(${idx})" class="text-slate-500 hover:text-blue-400 p-1 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="deleteGoal(${idx})" class="text-slate-500 hover:text-red-400 p-1 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
                 </div>
-                <div class="space-y-3"><div class="flex justify-between text-[10px] font-black uppercase"><span class="text-slate-500">Progress</span><span style="color: ${isDone ? '#10b981' : color}">${goal.progress}%</span></div>
-                <div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ${goal.progress}%; background: ${isDone ? '#10b981' : color}"></div></div>
-                <input type="range" min="0" max="100" value="${goal.progress}" class="w-full h-1 mt-3 cursor-pointer" oninput="updateGoalProgress(${idx}, this.value)"></div>
-                <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between"><div class="flex items-center gap-2"><i data-lucide="calendar" class="w-3 h-3 text-slate-600"></i><span class="text-[9px] font-black text-slate-500 uppercase">Deadline: ${goal.deadline || 'Bebas'}</span></div>
-                <span class="badge-category" style="background: ${color}15; color: ${color}; opacity: 0.8">${categoryIcons[goal.category] || '📌'} ${goal.category}</span></div>
+                <p class="text-xs text-slate-400 mb-6 px-10 line-clamp-2">${goal.description || 'Fokus pada hasil akhir.'}</p>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                        <span class="text-slate-500">Progress</span>
+                        <span style="color: ${isDone ? '#10b981' : color}">${goal.progress}%</span>
+                    </div>
+                    <div class="goal-progress-bar">
+                        <div class="goal-progress-fill" style="width: ${goal.progress}%; background: ${isDone ? '#10b981' : color}; box-shadow: 0 0 10px ${isDone ? '#10b98144' : color + '44'}"></div>
+                    </div>
+                    <input type="range" min="0" max="100" value="${goal.progress}" 
+                        class="w-full h-1 mt-3 opacity-30 hover:opacity-100 transition-opacity cursor-pointer" 
+                        onchange="updateGoalProgress(${idx}, this.value)">
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                    <span class="badge-category" style="background: ${color}15; color: ${color}; border: 1px solid ${color}33">
+                        ${categoryIcons[goal.category] || '📌'} ${goal.category}
+                    </span>
+                    ${isDone ? '<span class="text-[10px] font-black text-emerald-400 uppercase tracking-tighter flex items-center gap-1"><i data-lucide="award" class="w-3 h-3"></i> COMPLETED</span>' : ''}
+                </div>
             </div>`;
         }).join('');
         lucide.createIcons();
     }
-    function toggleGoal(idx) { appData.goals[idx].completed = !appData.goals[idx].completed; appData.goals[idx].progress = appData.goals[idx].completed ? 100 : 0; saveData(appData); renderGoals(); }
-    function updateGoalProgress(idx, val) { appData.goals[idx].progress = parseInt(val); appData.goals[idx].completed = val == 100; saveData(appData); renderGoals(); }
-    function deleteGoal(idx) { if(confirm("Hapus target ini?")) { appData.goals.splice(idx, 1); saveData(appData); renderGoals(); } }
+
     function openAddGoalModal() {
+        editingGoalIdx = null;
         tempSelectedCat = 'Kerja';
-        openModal(`<div class="mb-8"><h3 class="text-2xl font-black text-white mb-2">Target Baru</h3></div>
-            <div class="space-y-5">
-                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Nama Target</label><input type="text" id="gTitle" class="input-field font-bold"></div>
-                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Deskripsi</label><textarea id="gDesc" class="input-field h-20 resize-none text-sm"></textarea></div>
-                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Kategori</label>
-                    <div class="grid grid-cols-2 gap-3">${Object.keys(categoryColors).map(c => `<div onclick="selectCat('${c}')" class="cat-pill p-3 rounded-xl bg-white/5 text-center flex items-center justify-center gap-2 ${c === 'Kerja' ? 'active' : ''}" style="color: ${categoryColors[c]}"><span class="text-lg">${categoryIcons[c]}</span><span class="text-xs font-black uppercase">${c}</span></div>`).join('')}</div>
-                </div>
-                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Tenggat Waktu</label><input type="date" id="gDeadline" class="input-field font-bold"></div>
-                <div class="flex gap-4 pt-4"><button onclick="closeModal()" class="flex-1 font-black text-slate-500">BATAL</button><button onclick="createNewGoal()" class="flex-[2] btn-primary py-4 text-lg">BUAT</button></div>
-            </div>`);
-    }
-    function createNewGoal() {
-        const t = document.getElementById('gTitle').value.trim(); if(!t) return;
-        appData.goals.unshift({ title: t, description: document.getElementById('gDesc').value, deadline: document.getElementById('gDeadline').value, category: tempSelectedCat, progress: 0, completed: false });
-        saveData(appData); renderGoals(); closeModal();
+        showGoalModal("Target Baru");
     }
 
-    // --- TIMER & DASHBOARD ---
-    const music = document.getElementById('focusMusic');
+    function openEditGoalModal(idx) {
+        editingGoalIdx = idx;
+        const goal = appData.goals[idx];
+        tempSelectedCat = goal.category;
+        showGoalModal("Edit Target", goal);
+    }
+
+    function showGoalModal(title, data = null) {
+        openModal(`
+            <div class="mb-8"><h3 class="text-2xl font-black text-white mb-2">${title}</h3><p class="text-slate-400 text-sm">Target yang terukur adalah kunci sukses.</p></div>
+            <div class="space-y-5">
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Nama Target</label>
+                    <input type="text" id="gTitle" class="input-field font-bold" placeholder="Misal: Lulus Sertifikasi AWS" value="${data ? data.title : ''}"></div>
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Deskripsi Detail</label>
+                    <textarea id="gDesc" class="input-field h-20 resize-none text-sm" placeholder="Apa langkah-langkah kecilnya?">${data ? data.description : ''}</textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Tgl Mulai</label>
+                        <input type="date" id="gStartDate" class="input-field font-bold text-xs" value="${data ? data.startDate : ''}"></div>
+                    <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Deadline</label>
+                        <input type="date" id="gDeadline" class="input-field font-bold text-xs" value="${data ? data.deadline : ''}"></div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 flex justify-between">
+                        <span>Awal Progres</span> <span id="progressValueDisplay" class="text-blue-400">${data ? data.progress : '0'}%</span>
+                    </label>
+                    <input type="range" id="gProgress" min="0" max="100" step="5" class="w-full h-1 mt-2" 
+                        value="${data ? data.progress : '0'}" oninput="document.getElementById('progressValueDisplay').innerText = this.value + '%'">
+                </div>
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Kategori</label>
+                    <div class="grid grid-cols-2 gap-3">${Object.keys(categoryColors).map(c => `
+                        <div onclick="selectCat('${c}')" class="cat-pill p-3 rounded-xl bg-white/5 text-center flex items-center justify-center gap-2 ${tempSelectedCat === c ? 'active' : ''}" style="color: ${categoryColors[c]}">
+                            <span class="text-lg">${categoryIcons[c]}</span><span class="text-xs font-black uppercase">${c}</span>
+                        </div>`).join('')}</div>
+                </div>
+                <div class="flex gap-4 pt-4"><button onclick="closeModal()" class="flex-1 font-black text-slate-500">BATAL</button>
+                <button onclick="saveGoalTask()" class="flex-[2] btn-primary py-4 text-lg">SIMPAN TARGET</button></div>
+            </div>`);
+    }
+
+    function saveGoalTask() {
+        const title = document.getElementById('gTitle').value.trim();
+        if(!title) { showToast("Nama target wajib diisi!", "error"); return; }
+        
+        const goalData = {
+            title,
+            description: document.getElementById('gDesc').value.trim(),
+            startDate: document.getElementById('gStartDate').value,
+            deadline: document.getElementById('gDeadline').value,
+            category: tempSelectedCat,
+            progress: parseInt(document.getElementById('gProgress').value),
+            completed: parseInt(document.getElementById('gProgress').value) === 100
+        };
+
+        if (editingGoalIdx !== null) {
+            appData.goals[editingGoalIdx] = goalData;
+        } else {
+            appData.goals.unshift(goalData);
+        }
+
+        saveData(appData); renderGoals(); closeModal(); 
+        showToast(editingGoalIdx !== null ? "Target diperbarui!" : "Target baru dibuat! 🎯");
+    }
+
+    function updateGoalProgress(idx, val) {
+        const pct = parseInt(val);
+        appData.goals[idx].progress = pct;
+        appData.goals[idx].completed = (pct === 100);
+        saveData(appData);
+        renderGoals();
+        
+        // Dynamic Casual Motivation Logic
+        let msg = "";
+        if (pct >= 100) msg = goalMotivationPool[100];
+        else if (pct >= 75) msg = goalMotivationPool[75];
+        else if (pct >= 50) msg = goalMotivationPool[50];
+        else if (pct >= 25) msg = goalMotivationPool[25];
+        else msg = goalMotivationPool[0];
+        showToast(msg, "info");
+    }
+
+    function toggleGoal(idx) { 
+        appData.goals[idx].completed = !appData.goals[idx].completed; 
+        appData.goals[idx].progress = appData.goals[idx].completed ? 100 : (appData.goals[idx].progress === 100 ? 95 : appData.goals[idx].progress); 
+        saveData(appData); renderGoals(); 
+        if(appData.goals[idx].completed) showToast(goalMotivationPool[100], "success");
+    }
+
+    function deleteGoal(idx) { if(confirm("Hapus target ini?")) { appData.goals.splice(idx, 1); saveData(appData); renderGoals(); } }
+
+    // --- DEEP WORK OPTIMIZATION LOGIC ---
+    
+    function showMotivation() {
+        const today = getTodayKey();
+        const sessionCount = appData.dwHistory.filter(h => h.date === today).length;
+        const level = Math.min(sessionCount, 10);
+        const messages = motivationPool[level] || motivationPool[10];
+        const message = messages[Math.floor(Math.random() * messages.length)];
+        
+        const container = document.getElementById('motivationContainer');
+        if(container) container.innerHTML = `<p class="motivation-text fade-in text-blue-400 font-bold italic">"${message}"</p>`;
+    }
+
+    function clearMotivation() {
+        const container = document.getElementById('motivationContainer');
+        if(container) container.innerHTML = '';
+    }
+
     function selectDeepMode(mode) { 
-        if(dwIsRunning) return; dwCurrentMode = mode; 
-        document.getElementById('dwModeSelection').classList.add('hidden'); document.getElementById('dwSessionPanel').classList.remove('hidden'); 
+        if(dwIsRunning) return; 
+        dwCurrentMode = mode; 
+        document.getElementById('dwModeSelection').classList.add('hidden'); 
+        document.getElementById('dwSessionPanel').classList.remove('hidden'); 
         const mins = {pomodoro:25, research:90, learning:45}[mode]; 
         document.getElementById('dwModeTitle').textContent = mode.toUpperCase(); 
-        dwSeconds = mins * 60; dwTotalSeconds = dwSeconds; 
-        appData.timer.mode = mode; appData.timer.timeLeft = dwSeconds; saveData(appData); updateDWTimerDisplay(); 
+        dwSeconds = mins * 60; 
+        dwTotalSeconds = dwSeconds; 
+        appData.timer.mode = mode; 
+        appData.timer.timeLeft = dwSeconds;
+        appData.timer.isBreak = false;
+        saveData(appData); 
+        updateDWTimerDisplay(); 
+        clearMotivation();
     }
+
     function toggleDWTimer() { if(dwIsRunning) pauseTimer(); else startTimer(); }
+
     function startTimer() {
-        dwIsRunning = true; appData.timer.isRunning = true; updateBtnUI(true);
-        if (appData.settings.music) music.play().catch(() => {});
-        dwTimerInterval = setInterval(() => { if(dwSeconds > 0) { dwSeconds--; appData.timer.timeLeft = dwSeconds; updateDWTimerDisplay(); } else { finalizeSession(); } }, 1000); 
+        dwIsRunning = true; 
+        appData.timer.isRunning = true; 
+        updateBtnUI(true);
+        
+        if (appData.settings.music && !appData.timer.isBreak) {
+            getActiveAudio().play().catch(() => {});
+        }
+        
+        if(dwTimerInterval) clearInterval(dwTimerInterval);
+        dwTimerInterval = setInterval(() => { 
+            if(dwSeconds > 0) { 
+                dwSeconds--; 
+                appData.timer.timeLeft = dwSeconds;
+                updateDWTimerDisplay(); 
+            } else { 
+                handleTimerEnd(); 
+            } 
+        }, 1000); 
     }
-    function pauseTimer() { clearInterval(dwTimerInterval); dwIsRunning = false; appData.timer.isRunning = false; updateBtnUI(false); music.pause(); }
-    function finalizeSession() { 
-        pauseTimer(); appData.dwHistory.unshift({title:dwCurrentMode, date:getTodayKey(), duration:Math.floor(dwTotalSeconds/60), timeAt:new Date().toLocaleTimeString()}); 
-        appData.timer.mode = null; appData.timer.timeLeft = 0; saveData(appData); showToast("Sesi Selesai!"); renderDWHistory(); renderDashboard(); resetDWTimer(); 
+
+    function pauseTimer() { 
+        clearInterval(dwTimerInterval); 
+        dwIsRunning = false; 
+        appData.timer.isRunning = false; 
+        updateBtnUI(false); 
+        getActiveAudio().pause(); 
     }
-    function resetDWTimer() { pauseTimer(); dwSeconds = 0; dwTotalSeconds = 0; appData.timer.mode = null; saveData(appData); updateDWTimerDisplay(); document.getElementById('dwSessionPanel').classList.add('hidden'); document.getElementById('dwModeSelection').classList.remove('hidden'); }
+
+    function handleTimerEnd() {
+        pauseTimer();
+        const currentAudio = getActiveAudio();
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+
+        if (!appData.timer.isBreak) {
+            appData.dwHistory.unshift({
+                title: dwCurrentMode, 
+                date: getTodayKey(), 
+                duration: Math.floor(dwTotalSeconds/60), 
+                timeAt: new Date().toLocaleTimeString()
+            });
+            
+            showToast("Sesi Fokus Selesai! Mulai Istirahat Otomatis.", "success");
+            
+            appData.timer.isBreak = true;
+            const bMins = breakDurations[dwCurrentMode] || 5;
+            dwSeconds = bMins * 60;
+            dwTotalSeconds = dwSeconds;
+            appData.timer.timeLeft = dwSeconds;
+            
+            saveData(appData);
+            updateDWTimerDisplay();
+            setTimeout(startTimer, 1500); 
+        } else {
+            appData.timer.isBreak = false;
+            showMotivation(); 
+            showToast("Istirahat Selesai. Kamu Hebat!", "info");
+            
+            const wMins = {pomodoro:25, research:90, learning:45}[dwCurrentMode];
+            dwSeconds = wMins * 60;
+            dwTotalSeconds = dwSeconds;
+            appData.timer.timeLeft = dwSeconds;
+            saveData(appData);
+            updateDWTimerDisplay();
+            renderDWHistory();
+            renderDashboard();
+        }
+    }
+
+    function resetDWTimer() { 
+        pauseTimer(); 
+        dwSeconds = 0; 
+        dwTotalSeconds = 0; 
+        appData.timer.mode = null; 
+        appData.timer.isBreak = false;
+        saveData(appData); 
+        updateDWTimerDisplay(); 
+        document.getElementById('dwSessionPanel').classList.add('hidden'); 
+        document.getElementById('dwModeSelection').classList.remove('hidden'); 
+        clearMotivation();
+    }
+
     function updateDWTimerDisplay() { 
-        const mins = Math.floor(dwSeconds / 60), secs = dwSeconds % 60; document.getElementById('dwTimer').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`; 
+        const mins = Math.floor(dwSeconds / 60), secs = dwSeconds % 60; 
+        document.getElementById('dwTimer').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`; 
         if(document.getElementById('dwProgressBar')) document.getElementById('dwProgressBar').style.width = `${dwTotalSeconds > 0 ? (dwSeconds/dwTotalSeconds)*100 : 0}%`; 
+        
+        let label = "SIAP BEKERJA";
+        if (appData.timer.mode) {
+            label = appData.timer.isBreak ? "☕ WAKTUNYA ISTIRAHAT" : "🔥 SEDANG FOKUS";
+        }
+        document.getElementById('dwTimerLabel').textContent = label;
     }
+
     function updateBtnUI(r) { const btn = document.getElementById('dwStartBtn'); if(btn) btn.innerHTML = r ? `<i data-lucide="pause" class="w-6 h-6"></i><span>PAUSE</span>` : `<i data-lucide="play" class="w-6 h-6"></i><span>START</span>`; lucide.createIcons(); }
+    
     function renderDWHistory() { 
         const list = document.getElementById('dwHistory'), today = getTodayKey(), hist = appData.dwHistory.filter(h => h.date === today); 
         if(list) list.innerHTML = hist.map(h => `<div class="card-premium p-4 flex justify-between items-center"><div><p class="font-bold text-white uppercase text-xs">${h.title}</p><p class="text-[10px] text-slate-500 uppercase">${h.timeAt}</p></div><div class="text-blue-400 font-black">${h.duration}m</div></div>`).join('') || '<p class="text-center py-6 text-slate-600 text-sm font-bold">Belum ada riwayat hari ini.</p>'; 
     }
+
     function renderDashboard() { 
         const today = getTodayKey(), acts = appData.agenda[today]?.activities || []; 
         const focus = appData.dwHistory.filter(h => h.date === today).reduce((a,b)=>a+b.duration, 0); 
-        document.getElementById('statTotalTasks').textContent = acts.length; document.getElementById('statCompleted').textContent = acts.filter(a=>a.completed).length; document.getElementById('statFocusTime').textContent = focus + 'm'; 
+        document.getElementById('statTotalTasks').textContent = acts.length; 
+        document.getElementById('statCompleted').textContent = acts.filter(a=>a.completed).length; 
+        document.getElementById('statFocusTime').textContent = focus + 'm'; 
     }
     
+    // --- CORE UTILS ---
     function openModal(html) { const modal = document.getElementById('modalOverlay'); modal.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">${html}</div>`; modal.classList.remove('hidden'); lucide.createIcons(); }
     function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
-    function showToast(msg, type = "success") { const t = document.createElement('div'); t.className = `toast ${type === "success" ? "bg-emerald-600" : "bg-red-600"}`; t.textContent = msg; document.getElementById('toastContainer').appendChild(t); setTimeout(() => t.remove(), 3000); }
+    function showToast(msg, type = "success") { 
+        const t = document.createElement('div'); 
+        t.className = `toast ${type === "success" ? "bg-emerald-600" : (type === "error" ? "bg-red-600" : "bg-blue-600")}`; 
+        t.textContent = msg; 
+        document.getElementById('toastContainer').appendChild(t); 
+        setTimeout(() => t.remove(), 4000); 
+    }
 
     window.onload = () => {
-        if (window.elementSdk) window.elementSdk.init({ defaultConfig: { app_title: 'DayMind' }});
+        lucide.createIcons();
         if (appData.timer.mode && appData.timer.timeLeft > 0) {
             dwCurrentMode = appData.timer.mode; dwSeconds = appData.timer.timeLeft; dwTotalSeconds = dwSeconds;
             document.getElementById('dwModeSelection').classList.add('hidden'); document.getElementById('dwSessionPanel').classList.remove('hidden'); 
             document.getElementById('dwModeTitle').textContent = dwCurrentMode.toUpperCase(); updateDWTimerDisplay(); updateBtnUI(false); 
         }
         renderCurrentPage();
-        lucide.createIcons();
     };
   </script>
  </body>
