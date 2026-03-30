@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DayMind - Your Life Intelligence System</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <!-- SDK Protection -->
+  <script src="/_sdk/element_sdk.js" onerror="console.warn('SDK not found, fallback enabled')"></script>
+  <script src="/_sdk/data_sdk.js" onerror="console.warn('SDK not found, fallback enabled')"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    html, body { height: 100%; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%); }
+    * { box-sizing: border-box; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+    
+    .fade-in { animation: fadeIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .nav-item { transition: all 0.3s ease; cursor: pointer; }
+    .nav-item:hover { background: rgba(59,130,246,0.15); transform: translateX(4px); }
+    .nav-item.active { background: rgba(59,130,246,0.2); border-left: 3px solid #3b82f6; }
+
+    .card-premium { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .card-premium:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.15); }
+    
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; transition: all 0.3s ease; cursor: pointer; border: none; border-radius: 12px; font-weight: 700; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6); }
+    .btn-secondary { background: rgba(51, 65, 85, 0.6); color: #cbd5e1; transition: all 0.3s ease; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; }
+    
+    .input-field { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.2); color: #e2e8f0; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; width: 100%; }
+    .input-field:focus { outline: none; border-color: #3b82f6; background: rgba(15, 23, 42, 1); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; padding: 14px 20px; border-radius: 12px; color: white; font-weight: 600; animation: slideInRight 0.4s; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-content { background: linear-gradient(135deg, rgba(30, 41, 59, 1), rgba(15, 23, 42, 1)); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 28px; padding: 32px; max-width: 500px; width: 100%; animation: popIn 0.35s; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+
+    /* Immersive Styles */
+    .cat-pill { cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); filter: grayscale(0.3); opacity: 0.8; }
+    .cat-pill.active { filter: grayscale(0); opacity: 1; transform: scale(1.05); border-width: 2px; border-color: currentColor; }
+    .badge-category { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; }
+    
+    /* Progress Bars */
+    .progress-container { width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 15px 0; overflow: hidden; }
+    .goal-progress-bar { height: 12px; background: rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; position: relative; }
+    .goal-progress-fill { height: 100%; border-radius: 12px; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .checkbox-goal { width: 24px; height: 24px; border: 2px solid rgba(59, 130, 246, 0.4); border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+    .checkbox-goal.checked { background: #10b981; border-color: #10b981; }
+
+    /* Reflection & Photos */
+    .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .photo-item { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); background: rgba(15, 23, 42, 0.4); }
+    .photo-item img { width: 100%; height: 140px; object-fit: cover; }
+    .photo-desc { padding: 8px; font-size: 0.7rem; color: #94a3b8; line-height: 1.3; }
+    .photo-delete { position: absolute; top: 8px; right: 8px; background: rgba(239, 68, 68, 0.9); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .reflection-card { border-left: 4px solid #3b82f6; transition: all 0.3s; }
+    .reflection-card:focus-within { border-left-color: #10b981; }
+
+    #motivationArea { min-height: 4rem; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 1rem; }
+    .motivation-text { font-size: 0.85rem; font-weight: 600; color: #60a5fa; font-style: italic; }
+  </style>
+ </head>
+ <body class="h-full text-[#e2e8f0] overflow-hidden">
+  
+  <audio id="focusMusic" loop preload="auto">
+    <source src="https://raw.githubusercontent.com/syukurGL/pomodoro.html/main/Audio1.mp3" type="audio/mpeg">
+  </audio>
+
+  <div id="app" class="h-full flex overflow-hidden">
+   <!-- Sidebar -->
+   <aside id="sidebar" class="w-[260px] h-full bg-gradient-to-b from-slate-900/60 to-slate-950/60 border-r border-[rgba(59,130,246,0.2)] flex flex-col flex-shrink-0">
+    <div class="p-6 border-b border-[rgba(59,130,246,0.1)]">
+     <div class="flex items-center gap-2 mb-3">
+      <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">🧠</div>
+      <h1 class="text-xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">DayMind</h1>
+     </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+     <div class="nav-item active rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-medium" data-page="dashboard" onclick="navigateTo('dashboard');"><i data-lucide="sparkles" class="w-[18px] h-[18px] text-blue-400"></i><span>Dashboard</span></div>
+     <div class="nav-item rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-medium" data-page="agenda" onclick="navigateTo('agenda');"><i data-lucide="layout-list" class="w-[18px] h-[18px] text-blue-400"></i><span>Agenda</span></div>
+     <div class="nav-item rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-medium" data-page="deepwork" onclick="navigateTo('deepwork');"><i data-lucide="zap" class="w-[18px] h-[18px] text-blue-400"></i><span>Deep Work</span></div>
+     <div class="nav-item rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-medium" data-page="journal" onclick="navigateTo('journal');"><i data-lucide="book-open" class="w-[18px] h-[18px] text-blue-400"></i><span>Refleksi</span></div>
+     <div class="nav-item rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-medium" data-page="goals" onclick="navigateTo('goals');"><i data-lucide="target" class="w-[18px] h-[18px] text-blue-400"></i><span>Target</span></div>
+    </nav>
+   </aside>
+
+   <!-- Content -->
+   <main id="mainContent" class="flex-1 h-full overflow-y-auto p-8">
+    
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page fade-in">
+     <h2 class="text-3xl font-black text-white mb-8">Dashboard</h2>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="card-premium p-5"><p class="text-xs font-semibold text-slate-400 mb-3 uppercase">Tugas Agenda</p><p id="statTotalTasks" class="text-3xl font-black text-white">0</p></div>
+      <div class="card-premium p-5"><p class="text-xs font-semibold text-slate-400 mb-3 uppercase">Selesai</p><p id="statCompleted" class="text-3xl font-black text-emerald-400">0</p></div>
+      <div class="card-premium p-5"><p class="text-xs font-semibold text-slate-400 mb-3 uppercase">Waktu Fokus</p><p id="statFocusTime" class="text-3xl font-black text-blue-400">0m</p></div>
+      <div class="card-premium p-5"><p class="text-xs font-semibold text-slate-400 mb-3 uppercase">Streak Hari</p><p id="statStreak" class="text-3xl font-black text-amber-400">0</p></div>
+     </div>
+     <!-- Data Management -->
+     <div class="card-premium p-6 rounded-2xl mt-8">
+        <h3 class="font-bold text-white text-lg mb-4 flex items-center gap-2"><i data-lucide="settings" class="w-5 h-5 text-slate-400"></i> Manajemen Data</h3>
+        <div class="flex flex-wrap gap-4">
+          <button onclick="exportData()" class="btn-secondary px-6 py-3 flex items-center gap-2 text-sm font-bold"><i data-lucide="download" class="w-4 h-4 text-blue-400"></i> Export JSON</button>
+          <button onclick="triggerImport()" class="btn-primary px-6 py-3 flex items-center gap-2 text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-600"><i data-lucide="upload" class="w-4 h-4"></i> Import JSON</button>
+          <input type="file" id="importFileInput" class="hidden" accept=".json" onchange="importData(event)">
+        </div>
+     </div>
+    </div>
+
+    <!-- AGENDA -->
+    <div id="page-agenda" class="page hidden fade-in">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-4xl font-black text-white mb-2">Agenda</h2>
+              <div class="flex items-center gap-3 bg-slate-900/40 p-2 rounded-xl border border-white/5 w-fit">
+                <i data-lucide="calendar" class="w-4 h-4 text-blue-400"></i>
+                <input type="date" id="agendaDatePicker" class="bg-transparent text-white font-bold text-sm outline-none border-none cursor-pointer" onchange="switchAgendaDate(this.value)">
+              </div>
+            </div>
+            <button onclick="openQuickAgendaModal()" class="btn-primary px-6 py-3 flex items-center gap-2 text-base"><i data-lucide="plus-circle" class="w-5 h-5"></i> Tambah Agenda</button>
+        </div>
+        <div id="agendaList" class="space-y-4 max-w-4xl"></div>
+        <div id="agendaEmpty" class="hidden flex flex-col items-center justify-center py-20 text-center opacity-50">
+            <i data-lucide="calendar-days" class="w-12 h-12 mb-4"></i>
+            <h3 class="text-xl font-bold">Belum ada agenda di tanggal ini</h3>
+        </div>
+    </div>
+
+    <!-- DEEP WORK -->
+    <div id="page-deepwork" class="page hidden fade-in">
+     <h2 class="text-3xl font-black text-white mb-8">Deep Work</h2>
+     <div id="dwModeSelection" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+      <div onclick="selectDeepMode('pomodoro')" class="card-premium p-8 cursor-pointer text-center group">
+       <div class="text-5xl mb-4 group-hover:scale-110 transition">🍅</div>
+       <h3 class="text-xl font-black">Pomodoro</h3>
+       <p class="text-[10px] font-black uppercase text-slate-500">25 menit Fokus • 5 menit Jeda</p>
+      </div>
+      <div onclick="selectDeepMode('research')" class="card-premium p-8 cursor-pointer text-center group">
+       <div class="text-5xl mb-4 group-hover:scale-110 transition">🔬</div>
+       <h3 class="text-xl font-black">Research</h3>
+       <p class="text-[10px] font-black uppercase text-slate-500">90 menit Fokus • 15 menit Jeda</p>
+      </div>
+      <div onclick="selectDeepMode('learning')" class="card-premium p-8 cursor-pointer text-center group">
+       <div class="text-5xl mb-4 group-hover:scale-110 transition">📚</div>
+       <h3 class="text-xl font-black">Learning</h3>
+       <p class="text-[10px] font-black uppercase text-slate-500">45 menit Fokus • 10 menit Jeda</p>
+      </div>
+     </div>
+     
+     <div id="dwSessionPanel" class="hidden">
+      <div class="card-premium p-10 max-w-2xl mx-auto shadow-2xl">
+       <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-4">
+            <span id="dwModeIcon" class="text-5xl"></span>
+            <div><h3 id="dwModeTitle" class="font-black text-2xl uppercase"></h3><p id="dwTimerLabel" class="text-[10px] font-black text-blue-400 uppercase tracking-widest">SIAP BEKERJA</p></div>
+        </div>
+        <button onclick="resetDWTimer()" class="text-slate-500 hover:text-red-400 text-[10px] font-black uppercase">Batal Sesi</button>
+       </div>
+       <div class="text-center py-12 bg-slate-950/30 rounded-[32px] border border-white/5">
+        <div id="dwTimer" class="text-[120px] font-mono font-black text-white leading-none mb-4 tabular-nums">00:00</div>
+        <div class="px-20"><div class="progress-container"><div id="dwProgressBar"></div></div></div>
+        <div id="motivationArea" class="fade-in"></div>
+        <div class="flex justify-center gap-4 mt-8">
+         <button onclick="toggleDWTimer()" id="dwStartBtn" class="btn-primary px-12 py-5 rounded-2xl flex items-center gap-3 font-black text-lg"><i data-lucide="play" class="w-6 h-6"></i><span>MULAI</span></button>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="mt-12 max-w-2xl mx-auto">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-blue-400"></i> Riwayat Hari Ini</h3>
+        <div id="dwHistory" class="space-y-2"></div>
+     </div>
+    </div>
+
+    <!-- JOURNAL / REFLECTION -->
+    <div id="page-journal" class="page hidden fade-in">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div><h2 class="text-4xl font-black text-white mb-2">Refleksi Harian</h2><p class="text-slate-400 font-medium">Bimbing pikiran Anda untuk hari yang lebih baik.</p></div>
+            <div class="flex items-center gap-3 bg-slate-900/40 p-3 rounded-xl border border-white/5 w-fit">
+                <i data-lucide="calendar" class="w-5 h-5 text-blue-400"></i>
+                <input type="date" id="journalDatePicker" class="bg-transparent text-white font-bold text-sm outline-none border-none cursor-pointer" onchange="switchJournalDate(this.value)">
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-7 space-y-6" id="reflectionQuestionsContainer"></div>
+            <div class="lg:col-span-5 space-y-6">
+                <div class="card-premium p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-2 text-white"><i data-lucide="image" class="w-4 h-4 text-blue-400"></i><h3 class="font-black uppercase tracking-widest text-xs">Dokumentasi Foto</h3></div>
+                        <span id="docCount" class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-black">0</span>
+                    </div>
+                    <div class="bg-slate-950/40 p-4 rounded-2xl border border-white/5 mb-6">
+                        <input type="file" id="photoInput" class="hidden" accept="image/*">
+                        <button onclick="document.getElementById('photoInput').click()" class="w-full h-24 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group">
+                            <i data-lucide="upload-cloud" class="w-6 h-6 text-slate-600 group-hover:text-blue-400 transition-colors"></i>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pilih Foto</span>
+                        </button>
+                        <div class="mt-4 space-y-3">
+                            <input type="text" id="photoDescInput" placeholder="Keterangan foto (Wajib)..." class="input-field text-sm">
+                            <button onclick="savePhotoDocumentation()" class="btn-primary w-full py-3 text-xs flex items-center justify-center gap-2 uppercase tracking-widest"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Foto</button>
+                        </div>
+                    </div>
+                    <div id="photoGallery" class="photo-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARGET & GOALS -->
+    <div id="page-goals" class="page hidden fade-in">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div><h2 class="text-4xl font-black text-white mb-2">Target & Goals</h2><p class="text-slate-400 font-medium">Visualisasikan pencapaian besar Anda.</p></div>
+            <button onclick="openAddGoalModal()" class="btn-primary px-6 py-3 flex items-center gap-2 text-base shadow-lg shadow-blue-900/20"><i data-lucide="target" class="w-5 h-5"></i> Tambah Target</button>
+        </div>
+        <div id="goalsList" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl"></div>
+    </div>
+
+   </main>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()"></div>
+  <div id="toastContainer"></div>
+
+  <script>
+    // --- ENGINE & STATE ---
+    function saveData(data) { localStorage.setItem("daymindData", JSON.stringify(data)); }
+    function loadData() { const data = localStorage.getItem("daymindData"); return data ? JSON.parse(data) : null; }
+    const getTodayKey = () => new Date().toISOString().split('T')[0];
+
+    let appData = loadData() || {
+        agenda: {}, journal: {}, goals: [], dwHistory: [],
+        timer: { mode: null, timeLeft: 0, isRunning: false, isBreak: false, currentAudio: 'focusMusic' }, 
+        settings: { music: true }
+    };
+
+    const categoryColors = { "Kerja": "#38bdf8", "Belajar": "#34d399", "Olahraga": "#fb923c", "Pribadi": "#fb7185" };
+    const categoryIcons = { "Kerja": "💼", "Belajar": "📚", "Olahraga": "🏃", "Pribadi": "☕" };
+    const goalMotivationPool = { 0: "Gaspol! Yang penting berani mulai dulu.", 25: "Widih, pemanasan mantap! Lanjut terus jangan kasih kendor.", 50: "Setengah jalan tuntas! Kamu keren banget hari ini, gas terus!", 75: "Dikit lagi nyampe! Fokus, kamu hampir menaklukkan target ini.", 100: "GOKIL! Target beres. Waktunya self-reward, kamu pantas mendapatkannya!" };
+    const motivationLevels = { 1: "The Spark: Langkah pertama selalu yang terberat.", 2: "Building Momentum: Dua sesi tuntas! Ritme mulai terlihat.", 3: "Deep Focus: Kamu hebat, otakmu sedang bekerja dengan sangat baik!", 4: "The Halfway: Empat sesi! Kamu sudah di zona produktivitas tinggi.", 5: "Consistency King: Konsistensi adalah kunci, luar biasa!", 6: "Pro-Level: Enam sesi tuntas. Kamu sedang menciptakan karya hebat!", 7: "Unstoppable: Tujuh sesi! Nggak ada yang bisa stop kamu hari ini.", 8: "Peak Performance: Delapan sesi! Level fokusmu istimewa.", 9: "Legendary Status: Sembilan sesi! Hari ini bakal jadi hari paling produktifmu.", 10: "The Master: Monster Produktivitas! Kamu sudah sangat maksimal!" };
+
+    let currentPage = 'dashboard';
+    let currentAgendaDate = getTodayKey();
+    let currentJournalDate = getTodayKey();
+    let dwTimerInterval = null, dwSeconds = appData.timer.timeLeft, dwTotalSeconds = appData.timer.timeLeft, dwIsRunning = false;
+    let tempSelectedCat = 'Kerja', editingAgendaIdx = null, editingGoalIdx = null;
+
+    setInterval(() => { saveData(appData); }, 5000);
+
+    // --- NAVIGATION ---
+    function navigateTo(page) {
+        currentPage = page;
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        const el = document.getElementById('page-' + page);
+        const navItem = document.querySelector(`[data-page="${page}"]`);
+        if(el) el.classList.remove('hidden');
+        if(navItem) navItem.classList.add('active');
+        renderCurrentPage();
+        lucide.createIcons();
+    }
+
+    function renderCurrentPage() {
+        if(currentPage === 'dashboard') renderDashboard();
+        if(currentPage === 'agenda') renderAgenda();
+        if(currentPage === 'deepwork') renderDWHistory();
+        if(currentPage === 'journal') renderReflectionUI();
+        if(currentPage === 'goals') renderGoals();
+    }
+
+    // --- DATA MGMT ---
+    function exportData() {
+        const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `daymind-backup-${getTodayKey()}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    function triggerImport() { document.getElementById('importFileInput').click(); }
+    function importData(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try { appData = JSON.parse(e.target.result); saveData(appData); location.reload(); }
+            catch(err) { showToast("Format tidak valid!", "error"); }
+        };
+        reader.readAsText(file);
+    }
+
+    // --- AGENDA LOGIC ---
+    function switchAgendaDate(date) { currentAgendaDate = date; renderAgenda(); }
+    function calculateDuration(start, end) {
+        if (!start || !end || start==='--:--') return null;
+        const [h1, m1] = start.split(':').map(Number);
+        const [h2, m2] = end.split(':').map(Number);
+        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (diff < 0) diff += 1440;
+        return `${Math.floor(diff/60)}j ${diff%60}m`;
+    }
+    function renderAgenda() {
+        const listEl = document.getElementById('agendaList'), emptyEl = document.getElementById('agendaEmpty');
+        document.getElementById('agendaDatePicker').value = currentAgendaDate;
+        const activities = (appData.agenda[currentAgendaDate]?.activities || []).sort((a,b)=>(a.startTime||"").localeCompare(b.startTime||""));
+        if (!activities.length) { listEl.innerHTML = ''; emptyEl.classList.remove('hidden'); return; }
+        emptyEl.classList.add('hidden');
+        listEl.innerHTML = activities.map((act, i) => {
+            const color = categoryColors[act.category] || '#3b82f6';
+            const dur = calculateDuration(act.startTime, act.endTime);
+            return `<div class="card-premium p-5 flex items-center justify-between group fade-in ${act.completed ? 'opacity-40 grayscale-[0.5]' : ''}" style="background: ${color}1a; border-left: 6px solid ${color}">
+                <div class="flex items-center gap-5">
+                    <div onclick="toggleAgendaTask(${i})" class="checkbox-goal ${act.completed ? 'checked' : ''}" style="border-color: ${color}66">${act.completed ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}</div>
+                    <div><h4 class="text-lg font-black text-white ${act.completed ? 'line-through' : ''}">${act.title}</h4>
+                        <div class="flex items-center gap-3 mt-2"><span class="badge-category font-extrabold" style="background: ${color}33; color: white; border: 1px solid ${color}88;">${categoryIcons[act.category]} ${act.category}</span><span class="text-xs text-slate-400 font-bold">${act.startTime} - ${act.endTime} (${dur})</span></div>
+                    </div>
+                </div>
+                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onclick="openEditAgendaModal(${i})" class="p-2 text-slate-300 hover:text-white"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                    <button onclick="deleteAgendaTask(${i})" class="p-2 text-slate-300 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
+    function toggleAgendaTask(i) { appData.agenda[currentAgendaDate].activities[i].completed = !appData.agenda[currentAgendaDate].activities[i].completed; saveData(appData); renderAgenda(); renderDashboard(); }
+    function deleteAgendaTask(i) { if(confirm("Hapus agenda?")) { appData.agenda[currentAgendaDate].activities.splice(i,1); saveData(appData); renderAgenda(); renderDashboard(); } }
+    function openQuickAgendaModal() { editingAgendaIdx = null; showAgendaModal("Tambah Agenda Baru"); }
+    function openEditAgendaModal(i) { editingAgendaIdx = i; const data = appData.agenda[currentAgendaDate].activities[i]; tempSelectedCat = data.category; showAgendaModal("Edit Agenda", data); }
+    function showAgendaModal(title, data = null) {
+        openModal(`<div class="mb-8 text-center"><h3 class="text-2xl font-black text-white mb-2 uppercase">${title}</h3></div>
+            <div class="space-y-6 text-left">
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Nama Kegiatan</label><input type="text" id="taskTitle" class="input-field text-lg font-bold" value="${data ? data.title : ''}"></div>
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-3 tracking-widest">Kategori</label>
+                    <div class="grid grid-cols-2 gap-3">${Object.keys(categoryColors).map(c => `<div onclick="selectCat('${c}')" class="cat-pill p-3 rounded-xl bg-white/5 text-center flex items-center justify-center gap-2 ${tempSelectedCat === c ? 'active' : ''}" style="color: ${categoryColors[c]}"><span class="text-lg">${categoryIcons[c]}</span><span class="text-xs font-black uppercase">${c}</span></div>`).join('')}</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Mulai</label><input type="time" id="taskStartTime" class="input-field font-bold" value="${data ? data.startTime : ''}"></div>
+                  <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Selesai</label><input type="time" id="taskEndTime" class="input-field font-bold" value="${data ? data.endTime : ''}"></div>
+                </div>
+                <div class="flex gap-4 pt-4"><button onclick="closeModal()" class="flex-1 py-4 font-black text-slate-500">BATAL</button><button onclick="addAgendaTask()" class="flex-[2] btn-primary py-4 text-lg font-black uppercase">SIMPAN</button></div>
+            </div>`);
+    }
+    function selectCat(n) { tempSelectedCat = n; document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active')); event.currentTarget.classList.add('active'); }
+    function addAgendaTask() {
+        const title = document.getElementById('taskTitle').value.trim(); if (!title) return;
+        if(!appData.agenda[currentAgendaDate]) appData.agenda[currentAgendaDate] = { activities: [] };
+        const task = { title, category: tempSelectedCat, startTime: document.getElementById('taskStartTime').value || '--:--', endTime: document.getElementById('taskEndTime').value || '--:--', completed: editingAgendaIdx !== null ? appData.agenda[currentAgendaDate].activities[editingAgendaIdx].completed : false };
+        if (editingAgendaIdx !== null) appData.agenda[currentAgendaDate].activities[editingAgendaIdx] = task;
+        else appData.agenda[currentAgendaDate].activities.push(task);
+        saveData(appData); renderAgenda(); closeModal();
+    }
+
+    // --- DEEP WORK LOGIC ---
+    function selectDeepMode(mode) { 
+        if(dwIsRunning) return; appData.timer.mode = mode; appData.timer.isBreak = false;
+        document.getElementById('dwModeSelection').classList.add('hidden'); document.getElementById('dwSessionPanel').classList.remove('hidden'); 
+        const config = { pomodoro: 25, research: 90, learning: 45 }[mode];
+        document.getElementById('dwModeTitle').textContent = mode;
+        document.getElementById('dwModeIcon').textContent = { pomodoro: '🍅', research: '🔬', learning: '📚' }[mode];
+        dwSeconds = config * 60; dwTotalSeconds = dwSeconds; updateDWTimerDisplay();
+    }
+    function toggleDWTimer() { if(dwIsRunning) pauseTimer(); else startTimer(); }
+    function startTimer() {
+        dwIsRunning = true; updateBtnUI(true);
+        if (!appData.timer.isBreak) document.getElementById('focusMusic').play().catch(()=>{});
+        dwTimerInterval = setInterval(() => { 
+            if(dwSeconds > 0) { dwSeconds--; updateDWTimerDisplay(); } 
+            else handleSessionEnd();
+        }, 1000); 
+    }
+    function pauseTimer() { clearInterval(dwTimerInterval); dwIsRunning = false; updateBtnUI(false); document.getElementById('focusMusic').pause(); }
+    function handleSessionEnd() {
+        pauseTimer();
+        document.getElementById('focusMusic').pause(); document.getElementById('focusMusic').currentTime = 0;
+        if (!appData.timer.isBreak) {
+            appData.dwHistory.unshift({ title: appData.timer.mode, date: getTodayKey(), duration: Math.floor(dwTotalSeconds/60), timeAt: new Date().toLocaleTimeString() });
+            showToast("Sesi Fokus Selesai! Mulai istirahat otomatis.", "success");
+            const bMins = { pomodoro: 5, research: 15, learning: 10 }[appData.timer.mode];
+            dwSeconds = bMins * 60; dwTotalSeconds = dwSeconds; appData.timer.isBreak = true;
+            updateDWTimerDisplay(); setTimeout(startTimer, 1500);
+        } else {
+            appData.timer.isBreak = false; showMotivation(); showToast("Istirahat Selesai!", "info");
+            resetDWTimer();
+        }
+    }
+    function showMotivation() {
+        const today = getTodayKey(); const completed = appData.dwHistory.filter(h => h.date === today).length;
+        const quote = motivationLevels[Math.min(completed, 10)] || motivationLevels[10];
+        document.getElementById('motivationArea').innerHTML = `<p class="motivation-text fade-in">"${quote}"</p>`;
+    }
+    function resetDWTimer() { pauseTimer(); dwSeconds = 0; dwTotalSeconds = 0; appData.timer.mode = null; appData.timer.isBreak = false; 
+        document.getElementById('dwSessionPanel').classList.add('hidden'); document.getElementById('dwModeSelection').classList.remove('hidden'); renderDWHistory(); renderDashboard(); }
+    function updateDWTimerDisplay() { 
+        const mins = Math.floor(dwSeconds / 60), secs = dwSeconds % 60;
+        document.getElementById('dwTimer').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        if(document.getElementById('dwProgressBar')) document.getElementById('dwProgressBar').style.width = `${dwTotalSeconds > 0 ? (dwSeconds/dwTotalSeconds)*100 : 0}%`;
+        document.getElementById('dwTimerLabel').textContent = appData.timer.isBreak ? "☕ WAKTUNYA ISTIRAHAT" : "🔥 SEDANG FOKUS";
+    }
+    function updateBtnUI(r) { const btn = document.getElementById('dwStartBtn'); if(btn) btn.innerHTML = r ? `<i data-lucide="pause" class="w-6 h-6"></i><span>PAUSE</span>` : `<i data-lucide="play" class="w-6 h-6"></i><span>MULAI</span>`; lucide.createIcons(); }
+    function renderDWHistory() {
+        const hist = (appData.dwHistory || []).filter(h => h.date === getTodayKey());
+        document.getElementById('dwHistory').innerHTML = hist.map(h => `<div class="card-premium p-4 flex justify-between items-center"><div><p class="font-bold text-white uppercase text-[10px] tracking-widest">${h.title}</p><p class="text-[9px] text-slate-500 font-bold uppercase">${h.timeAt}</p></div><div class="text-blue-400 font-black text-lg">${h.duration}m</div></div>`).join('') || '<p class="text-center py-10 opacity-30 text-[10px] font-black uppercase">Belum ada riwayat hari ini.</p>';
+    }
+
+    // --- REFLEKSI LOGIC ---
+    function switchJournalDate(date) { currentJournalDate = date; renderReflectionUI(); }
+    function getJournalEntry(date) { if(!appData.journal[date]) appData.journal[date] = { answers: { q1:"",q2:"",q3:"",q4:"",q5:"" }, documentation: [] }; return appData.journal[date]; }
+    function renderReflectionUI() {
+        const entry = getJournalEntry(currentJournalDate); document.getElementById('journalDatePicker').value = currentJournalDate;
+        const qs = [ {id:'q1',t:'Hal terpenting hari ini?'}, {id:'q2',t:'Apa yang berjalan lancar?'}, {id:'q3',t:'Tantangan terbesar hari ini?'}, {id:'q4',t:'Pelajaran apa yang didapat?'}, {id:'q5',t:'Apa yang diperbaiki besok?'} ];
+        document.getElementById('reflectionQuestionsContainer').innerHTML = qs.map((q,i) => `<div class="card-premium p-6 reflection-card fade-in"><div class="flex items-center gap-3 mb-4"><span class="q-number">Q${i+1}</span><h4 class="text-sm font-black text-slate-300">${q.t}</h4></div><textarea class="input-field bg-transparent border-none text-lg p-0 focus:ring-0 resize-none min-h-[80px]" oninput="appData.journal['${currentJournalDate}'].answers['${q.id}']=this.value">${entry.answers[q.id] || ""}</textarea></div>`).join('');
+        renderPhotoGallery(entry.documentation);
+    }
+    function savePhotoDocumentation() {
+        const f = document.getElementById('photoInput').files[0]; const d = document.getElementById('photoDescInput').value.trim();
+        if(!f || !d) { showToast("Foto & Keterangan wajib!", "error"); return; }
+        const r = new FileReader(); r.onload = (e) => { 
+            getJournalEntry(currentJournalDate).documentation.push({ image: e.target.result, description: d });
+            saveData(appData); renderPhotoGallery(getJournalEntry(currentJournalDate).documentation);
+        }; r.readAsDataURL(f);
+    }
+    function renderPhotoGallery(photos) {
+        document.getElementById('docCount').innerText = photos.length;
+        document.getElementById('photoGallery').innerHTML = photos.map((p,i) => `<div class="photo-item fade-in"><button onclick="deletePhoto(${i})" class="photo-delete"><i data-lucide="x" class="w-3 h-3"></i></button><img src="${p.image}"><div class="photo-desc">${p.description}</div></div>`).join('');
+        lucide.createIcons();
+    }
+    function deletePhoto(idx) { if(confirm("Hapus foto?")) { getJournalEntry(currentJournalDate).documentation.splice(idx,1); saveData(appData); renderPhotoGallery(getJournalEntry(currentJournalDate).documentation); } }
+
+    // --- GOALS LOGIC ---
+    function renderGoals() {
+        const list = document.getElementById('goalsList'); appData.goals.sort((a,b)=> (a.deadline||"").localeCompare(b.deadline||""));
+        if(!appData.goals.length) { list.innerHTML = `<p class="text-center py-20 opacity-30">Belum ada target.</p>`; return; }
+        list.innerHTML = appData.goals.map((g, idx) => {
+            const color = categoryColors[g.category] || '#3b82f6'; const isDone = g.progress >= 100;
+            return `<div class="card-premium p-7 fade-in ${isDone ? 'border-emerald-500/50 bg-emerald-500/5' : ''}">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-4">
+                        <div onclick="toggleGoal(${idx})" class="checkbox-goal ${isDone ? 'checked' : ''}" style="border-color: ${color}66">${isDone ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : ''}</div>
+                        <div><h4 class="text-xl font-black text-white ${isDone ? 'opacity-40 line-through' : ''}">${g.title}</h4><p class="text-[9px] font-black uppercase text-slate-500 mt-1">${g.startDate} s/d ${g.deadline || 'Bebas'}</p></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openEditGoalModal(${idx})" class="p-1 text-slate-500 hover:text-blue-400"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="deleteGoal(${idx})" class="p-1 text-slate-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mb-6 px-10 line-clamp-2">${g.description || 'Fokus pada hasil akhir.'}</p>
+                <div class="space-y-2"><div class="flex justify-between text-[10px] font-black uppercase tracking-widest"><span class="text-slate-500">Progres</span><span style="color: ${color}">${g.progress}%</span></div>
+                    <div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ${g.progress}%; background: ${isDone ? '#10b981' : color}"></div></div>
+                    <input type="range" min="0" max="100" value="${g.progress}" class="w-full h-1 mt-3 opacity-30 hover:opacity-100 cursor-pointer" onchange="updateGoalProgress(${idx}, this.value)">
+                </div>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
+    
+    // FUNGSI FIXED: toggleGoal
+    function toggleGoal(idx) {
+        const goal = appData.goals[idx];
+        const isDone = goal.progress >= 100;
+        if (isDone) {
+            goal.progress = 0;
+        } else {
+            goal.progress = 100;
+        }
+        saveData(appData);
+        renderGoals();
+    }
+
+    function updateGoalProgress(idx, val) { appData.goals[idx].progress = parseInt(val); saveData(appData); renderGoals(); showToast(goalMotivationPool[Math.floor(val/25)*25] || goalMotivationPool[100], "info"); }
+    function deleteGoal(idx) { if(confirm("Hapus target?")) { appData.goals.splice(idx,1); saveData(appData); renderGoals(); } }
+    function openAddGoalModal() { editingGoalIdx = null; showGoalModal("Target Baru"); }
+    function openEditGoalModal(i) { editingGoalIdx = i; showGoalModal("Edit Target", appData.goals[i]); }
+    function showGoalModal(title, data=null) {
+        openModal(`<div class="mb-8 text-center"><h3 class="text-2xl font-black text-white uppercase">${title}</h3></div>
+            <div class="space-y-5 text-left">
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Nama Target</label><input type="text" id="gTitle" class="input-field font-bold" value="${data ? data.title : ''}"></div>
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Deskripsi</label><textarea id="gDesc" class="input-field h-20 resize-none text-sm">${data ? data.description : ''}</textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Mulai</label><input type="date" id="gStart" class="input-field font-bold text-xs" value="${data ? data.startDate : ''}"></div>
+                    <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Deadline</label><input type="date" id="gEnd" class="input-field font-bold text-xs" value="${data ? data.deadline : ''}"></div>
+                </div>
+                <div><label class="block text-[10px] font-black uppercase text-slate-500 mb-2 flex justify-between"><span>Progres</span> <span id="pVal" class="text-blue-400 font-black">${data ? data.progress : '0'}%</span></label>
+                    <input type="range" id="gProg" min="0" max="100" class="w-full h-1 mt-2" value="${data ? data.progress : '0'}" oninput="document.getElementById('pVal').innerText=this.value+'%'">
+                </div>
+                <div class="flex gap-4 pt-4"><button onclick="closeModal()" class="flex-1 py-4 font-black text-slate-500">BATAL</button><button onclick="saveGoalTask()" class="flex-[2] btn-primary py-4 text-lg font-black uppercase">SIMPAN</button></div>
+            </div>`);
+    }
+    function saveGoalTask() {
+        const g = { title: document.getElementById('gTitle').value, description: document.getElementById('gDesc').value, startDate: document.getElementById('gStart').value, deadline: document.getElementById('gEnd').value, progress: parseInt(document.getElementById('gProg').value), category: "Kerja" };
+        if(editingGoalIdx !== null) appData.goals[editingGoalIdx] = g; else appData.goals.unshift(g);
+        saveData(appData); renderGoals(); closeModal(); showToast("Target disimpan!");
+    }
+
+    // --- DASHBOARD ---
+    function renderDashboard() {
+        const today = getTodayKey(); const acts = appData.agenda[today]?.activities || [];
+        const focus = (appData.dwHistory || []).filter(h => h.date === today).reduce((a,b)=>a+b.duration, 0);
+        document.getElementById('statTotalTasks').textContent = acts.length;
+        document.getElementById('statCompleted').textContent = acts.filter(a=>a.completed).length;
+        document.getElementById('statFocusTime').textContent = focus + 'm';
+    }
+
+    function openModal(html) { const modal = document.getElementById('modalOverlay'); modal.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">${html}</div>`; modal.classList.remove('hidden'); lucide.createIcons(); }
+    function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+    function showToast(msg, type = "success") { const t = document.createElement('div'); t.className = `toast ${type === "success" ? "bg-emerald-600" : "bg-red-600"}`; t.textContent = msg; document.getElementById('toastContainer').appendChild(t); setTimeout(() => t.remove(), 4000); }
+
+    window.onload = () => { lucide.createIcons(); renderCurrentPage(); };
+  </script>
+ </body>
+</html>
